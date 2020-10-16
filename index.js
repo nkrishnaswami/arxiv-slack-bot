@@ -12,7 +12,7 @@ const APP_TOKEN = process.env.APP_TOKEN || config.app_token;
 const OAUTH_TOKEN = process.env.OAUTH_TOKEN || config.oauth_token;
 const PORT = process.env.PORT || config.port || 8081;
 var Promise = require('bluebird');
-var rp = require('request-promise');
+var axios = require('axios');
 var parseString = Promise.promisify(require('xml2js').parseString);
 
 const ARXIV_ID   = /\d{4}\.\d{4,5}/;
@@ -20,11 +20,15 @@ const ARXIV_LINK = /(?:https?:\/\/)?arxiv\.org\/(?:abs|pdf)\/(\d{4}\.\d{4,5})(?:
 const ARXIV_API_URL = 'http://export.arxiv.org/api/query?search_query=id:';
 
 const fetchArxiv = function (arxivId, callback) {
-  return rp(ARXIV_API_URL + arxivId).then(parseApiResponseBody);
+  return axios.get(ARXIV_API_URL + arxivId).then(parseApiResponse);
 };
 
-const parseApiResponseBody = function (body) {
-  return parseString(body).then(result => {
+const parseApiResponse = function (response) {
+    if (response.status != 200) {
+	console.log(`Error calling arXiv API for ${request.url}`)
+	return;
+    }
+  return parseString(response.data).then(result => {
     if (!result.feed.entry) {
       throw new Error('ArXiv entry not found');
     }
