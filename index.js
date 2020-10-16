@@ -1,10 +1,16 @@
+var config = require('./config.js');
+
+var http = require('http');
+var Express = require('express');
+var BodyParser = require('body-parser');
+
 // Partially derived from https://github.com/joebullard/slack-arxivbot.
 
 // "Verification token" under Basic Information
-const APP_TOKEN = 'NEEDS TO BE SET';
 // "OAuth Access Token" under OAuth & Permissions
-const OAUTH_TOKEN = 'NEEDS TO BE SET';
-
+const APP_TOKEN = process.env.APP_TOKEN || config.app_token;
+const OAUTH_TOKEN = process.env.OAUTH_TOKEN || config.oauth_token;
+const PORT = process.env.PORT || config.port || 8081;
 var Promise = require('bluebird');
 var rp = require('request-promise');
 var parseString = Promise.promisify(require('xml2js').parseString);
@@ -58,17 +64,21 @@ const formatArxivAsAttachment = function (arxivData) {
   };
 }
 
-
-exports.arxivBot = function arxivBot(req, res) {
+arxivBot = function arxivBot(req, res) {
+  console.log("Got request:", req.body);
   if (req.body.token !== APP_TOKEN) {
+    console.log("got bad token", req.body.token);
     res.status(403).send('Invalid token');
     return;
   }
   
   if (req.body.type === 'url_verification') {
-    res.send(req.body.challenge);
+    console.log("got challenge", req.body.challenge);
+    res.status(200).send(req.body.challenge);
+    console.log("replied", req.body.challenge);
   } else if (req.body.type === 'event_callback' && req.body.event.type == 'link_shared') {
-    res.send('ok');
+    console.log("got event", req.body.event);
+    res.status(200).send('ok');
     
     const event = req.body.event;
     var unfurls = {};
@@ -97,3 +107,16 @@ exports.arxivBot = function arxivBot(req, res) {
     res.status(400).send('Unknown request');
   }
 }
+
+
+// Install the routes.
+var router = Express.Router();
+router.all('/arxivbot', arxivBot);
+
+// Start the server.
+var app = Express();
+app.use(BodyParser.urlencoded({extended: true}));
+app.use(BodyParser.json());
+app.use('/', router);
+http.createServer(app).listen(PORT);
+

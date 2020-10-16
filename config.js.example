@@ -1,0 +1,4 @@
+module.exports = {
+    app_token: 'SOME_APP_TOKEN',
+    oauth_token: 'xoxa-some-oauth-token',
+};
