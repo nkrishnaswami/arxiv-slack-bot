@@ -1,6 +1,6 @@
 {
   "name": "arxiv-slack-bot",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Unfurls arXiv links on Slack.",
   "main": "index.js",
   "scripts": {
@@ -8,14 +8,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/rshin/arxiv-slack-bot"
+    "url": "https://github.com/nkrishnaswami/arxiv-slack-bot"
   },
   "dependencies": {
-    "bluebird": "^3.5.0",
     "axios": "~0.20.0",
-    "xml2js": "^0.4.17",
-    "babel-register": "~6.26.0",
-    "express": "~4.17.1"
+    "xml2js": "^0.4.23",
+    "express": "~4.17.1",
   },
   "author": "Richard Shin"
 }
