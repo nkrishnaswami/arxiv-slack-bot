@@ -23,9 +23,10 @@ const ARXIV_LINK = /(?:https?:\/\/)?arxiv\.org\/(?:abs|pdf)\/(\d{4}\.\d{4,5})(?:
 const ARXIV_API_URL = 'http://export.arxiv.org/api/query?search_query=id:';
 
 const fetchArxivData = async function (arxivId, callback) {
+  console.log(`Fetching arxiv data for ${arxivId}`);
   const response = await axios.get(ARXIV_API_URL + arxivId);
   if (response.status != 200) {
-    console.log(`Error calling arXiv API for ${request.url}`)
+    console.log(`Error calling arXiv API for ${request.url}`);
     return;
   }
   const result = await parseString(response.data);
@@ -33,39 +34,80 @@ const fetchArxivData = async function (arxivId, callback) {
     throw new Error('ArXiv entry not found');
   }
   var entry = result.feed.entry[0];
-  console.log('Got arXiv data:', entry)
   return {
-    id      : entry.id ?
+    id: entry.id ?
       entry.id[0].split('/').pop() :
       '{No ID}',
-    url     : entry.id ?
+    url: entry.id ?
       entry.id[0] :
       '{No url}',
-    title   : entry.title ?
+    title: entry.title ?
       entry.title[0].trim().replace(/\n/g, ' ') :
       '{No title}',
-    summary : entry.summary ?
+    summary: entry.summary ?
       entry.summary[0].trim().replace(/\n/g, ' ') :
       '{No summary}',
-    authors : entry.author ?
+    authors: entry.author ?
       entry.author.map(function (a) { return a.name[0]; }) :
     '{No authors}',
-    categories : entry.category ? entry.category.map(c => c.$.term) : [],
-    updated_time : Date.parse(entry.updated) / 1000,
+    categories: entry.category ? entry.category.map(c => c.$.term) : [],
+    updated_time: Date.parse(entry.updated) / 1000,
   };
 }
 
 const formatArxivDataAsAttachment = function (arxivData) {
   return {
     author_name: arxivData.authors.join(', '),
-    title      : '[' + arxivData.id + '] ' + arxivData.title,
-    title_link : arxivData.url,
-    text       : arxivData.summary,
-    footer     : arxivData.categories.join(', '),
+    title: '[' + arxivData.id + '] ' + arxivData.title,
+    title_link: arxivData.url,
+    text: arxivData.summary,
+    footer: arxivData.categories.join(', '),
     footer_icon: 'https://arxiv.org/favicon.ico',
-    ts         : arxivData.updated_time,
-    color      : '#b31b1b',
+    ts: arxivData.updated_time,
+    color: '#b31b1b',
   };
+}
+
+const getLinkUnfurls = async function(links) {
+  var unfurls = {};
+  
+  for (const link of links) {
+    if (link.domain !== 'arxiv.org') {
+      console.log('error: incorrect link.domain:', link.domain);
+      continue;
+    }
+    const arxivData = await fetchArxivData(link.url.match(ARXIV_ID)[0]);
+    unfurls[link.url] = formatArxivDataAsAttachment(arxivData);
+  }
+
+  return unfurls;
+}
+
+const handleEventRequest = async function(req, res) {
+  console.log("got event", req.body.event);
+  switch (req.body.event.type) {
+  case 'link_shared':
+    res.status(200).send('ok');
+    const event = req.body.event;
+    const unfurl_data = {
+      token: OAUTH_TOKEN,
+      channel: event.channel,
+      ts: event.message_ts,
+      unfurls: await getLinkUnfurls(event.links)
+    };
+    console.log('Posting unfurls:', unfurl_data);
+    const post_result = await axios({
+      method: 'POST',
+      url: 'https://slack.com/api/chat.unfurl',
+      headers: {'content-type': 'application/json; charset=utf-8'},
+      unfurl_data});
+    const {status, headers, data} = post_result;
+    console.log('post_result:', status, headers, data);
+    break;
+  default:
+    console.warn(`Unexpected event type '${req.body.event.type}'`);
+    res.status(400).send('Unknown request');
+  }
 }
 
 const verifySignature = function(req, signing_secret) {
@@ -78,63 +120,43 @@ const verifySignature = function(req, signing_secret) {
   return hmac.digest('hex') === hash;
 };
 
-arxivBot = async function arxivBot(req, res) {
-  console.log("Got request:", req.body);
+const verifyRequest = function(req) {
   if (SIGNING_SECRET) {
-    const result = verifySignature(req, SIGNING_SECRET);
-    if (result.code) {
-      console.warn(`checkSignature: ${result.msg}`)
-      res.status(result.code).send(result.msg);
-      return;
+    if (!verifySignature(req, SIGNING_SECRET)) {
+      return {msg: 'unable to verify request signature', code: 403};
     }
-  } else if (req.body.token !== VERIFICATION_TOKEN) {
+    return {msg: 'successfully verified request signature', code: 200};
+  }
+  if (VERIFICATION_TOKEN) {
     // Deprecated fallback if no signing secret is configured.
-    console.log("got bad token", req.body.token);
-    res.status(403).send('Invalid token');
+    console.warn('No signing secret specified; falling back to token verification.');
+    if (req.body.token != VERIFICATION_TOKEN) {
+      return {msg: 'received invalid token', code: 403};
+    }
+    return {msg: 'successfully verified token', code: 200};
+  }
+  return {msg: 'No verification requested', code: 200};
+}
+
+const arxivBot = async function(req, res) {
+  console.log("Got request:", req.body);
+  const {msg, code} = verifyRequest(req);
+    console.log(`Verification result: status ${code}: ${msg}`);
+  if (code != 200) {
+    res.status.status(code).send(msg);
     return;
   }
-  
-  if (req.body.type === 'url_verification') {
+  switch (req.body.type) {
+  case 'url_verification':
     console.log("got challenge", req.body.challenge);
     res.status(200).send(req.body.challenge);
     console.log("replied", req.body.challenge);
-  } else if (req.body.type === 'event_callback' && req.body.event.type == 'link_shared') {
-    console.log("got event", req.body.event);
-    res.status(200).send('ok');
-    
-    const event = req.body.event;
-    var unfurls = {};
-    
-    for (const link of event.links) {
-      if (link.domain !== 'arxiv.org') {
-	console.log('error: incorrect link.domain:', link.domain);
-	continue;
-      }
-      const arxivData = await fetchArxivData(link.url.match(ARXIV_ID)[0]);
-      unfurls[link.url] = formatArxivDataAsAttachment(arxivData);
-      console.log('Formatted arXiv data:', unfurls[link.url]);
-    }
-    console.log('Posting unfurls:', {
-      token: OAUTH_TOKEN,
-      channel: event.channel,
-      ts: event.message_ts,
-      unfurls: unfurls
-    });
-    const post_result = await axios({
-      method: 'POST',
-      url: 'https://slack.com/api/chat.unfurl',
-      headers: { 'content-type': 'application/json; charset=utf-8' },
-      data: {
-	token: OAUTH_TOKEN,
-	channel: event.channel,
-	ts: event.message_ts,
-	unfurls: unfurls,
-
-      }
-    });
-    const {status, headers, data} = post_result;
-    console.log('post_result:', status, headers, data);
-  } else {
+    break;
+  case 'event_callback':
+    await handleEventRequest(req, res);
+    break;
+  default:
+    console.warn(`Unexpected request type '${req.body.type}'`);
     res.status(400).send('Unknown request');
   }
 }
