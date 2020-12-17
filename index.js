@@ -90,17 +90,21 @@ const handleEventRequest = async function(req, res) {
     res.status(200).send('ok');
     const event = req.body.event;
     const unfurl_data = {
-      token: OAUTH_TOKEN,
       channel: event.channel,
       ts: event.message_ts,
       unfurls: await getLinkUnfurls(event.links)
     };
     console.log('Posting unfurls:', unfurl_data);
+
     const post_result = await axios({
       method: 'POST',
       url: 'https://slack.com/api/chat.unfurl',
-      headers: {'content-type': 'application/json; charset=utf-8'},
-      unfurl_data});
+      headers: {
+        'content-type': 'application/json; charset=utf-8',
+        'authorization': `Bearer ${OAUTH_TOKEN}`,
+      },
+      data: unfurl_data,
+    });
     const {status, headers, data} = post_result;
     console.log('post_result:', status, headers, data);
     break;
@@ -143,7 +147,7 @@ const arxivBot = async function(req, res) {
   const {msg, code} = verifyRequest(req);
     console.log(`Verification result: status ${code}: ${msg}`);
   if (code != 200) {
-    res.status.status(code).send(msg);
+    res.status(code).send(msg);
     return;
   }
   switch (req.body.type) {
