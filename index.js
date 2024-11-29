@@ -126,8 +126,12 @@ const verifySignature = function(req, signing_secret) {
 
 const verifyRequest = function(req) {
   if (SIGNING_SECRET) {
-    if (!verifySignature(req, SIGNING_SECRET)) {
-      return {msg: 'unable to verify request signature', code: 403};
+    try {
+      if (!verifySignature(req, SIGNING_SECRET)) {
+	return {msg: 'unable to verify request signature', code: 403};
+      }
+    } catch(e) {
+      return {msg: 'invalid request signature', code: 401};
     }
     return {msg: 'successfully verified request signature', code: 200};
   }
