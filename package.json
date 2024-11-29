@@ -11,10 +11,10 @@
     "url": "https://github.com/nkrishnaswami/arxiv-slack-bot"
   },
   "dependencies": {
-    "axios": "~0.20.0",
-    "express": "~4.17.1",
-    "nodemon": "^2.0.6",
-    "xml2js": "^0.4.23"
+    "axios": "~1.7.8",
+    "express": "~4.21.1",
+    "nodemon": "^3.1.7",
+    "xml2js": "^0.6.2"
   },
   "author": "Richard Shin"
 }
