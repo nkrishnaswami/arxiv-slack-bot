@@ -1,4 +1,6 @@
-module.exports = {
+const config = {
     app_token: 'SOME_APP_TOKEN',
     oauth_token: 'xoxa-some-oauth-token',
 };
+
+export default config;

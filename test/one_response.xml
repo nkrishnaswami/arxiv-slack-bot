@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <link href="http://arxiv.org/api/query?search_query%3D%26id_list%3D2202.01615%26start%3D0%26max_results%3D10" rel="self" type="application/atom+xml"/>
+  <title type="html">ArXiv Query: search_query=&amp;id_list=2202.01615&amp;start=0&amp;max_results=10</title>
+  <id>http://arxiv.org/api/NsOjofwvCxRLwulbBMM4m4mbH6s</id>
+  <updated>2025-02-02T00:00:00-05:00</updated>
+  <opensearch:totalResults xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/">1</opensearch:totalResults>
+  <opensearch:startIndex xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/">0</opensearch:startIndex>
+  <opensearch:itemsPerPage xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/">10</opensearch:itemsPerPage>
+  <entry>
+    <id>http://arxiv.org/abs/2202.01615v1</id>
+    <updated>2022-02-03T14:41:39Z</updated>
+    <published>2022-02-03T14:41:39Z</published>
+    <title>Measuring Disparate Outcomes of Content Recommendation Algorithms with
+  Distributional Inequality Metrics</title>
+    <summary>  The harmful impacts of algorithmic decision systems have recently come into
+focus, with many examples of systems such as machine learning (ML) models
+amplifying existing societal biases. Most metrics attempting to quantify
+disparities resulting from ML algorithms focus on differences between groups,
+dividing users based on demographic identities and comparing model performance
+or overall outcomes between these groups. However, in industry settings, such
+information is often not available, and inferring these characteristics carries
+its own risks and biases. Moreover, typical metrics that focus on a single
+classifier's output ignore the complex network of systems that produce outcomes
+in real-world settings. In this paper, we evaluate a set of metrics originating
+from economics, distributional inequality metrics, and their ability to measure
+disparities in content exposure in a production recommendation system, the
+Twitter algorithmic timeline. We define desirable criteria for metrics to be
+used in an operational setting, specifically by ML practitioners. We
+characterize different types of engagement with content on Twitter using these
+metrics, and use these results to evaluate the metrics with respect to the
+desired criteria. We show that we can use these metrics to identify content
+suggestion algorithms that contribute more strongly to skewed outcomes between
+users. Overall, we conclude that these metrics can be useful tools for
+understanding disparate outcomes in online social networks.
+</summary>
+    <author>
+      <name>Tomo Lazovich</name>
+    </author>
+    <author>
+      <name>Luca Belli</name>
+    </author>
+    <author>
+      <name>Aaron Gonzales</name>
+    </author>
+    <author>
+      <name>Amanda Bower</name>
+    </author>
+    <author>
+      <name>Uthaipon Tantipongpipat</name>
+    </author>
+    <author>
+      <name>Kristian Lum</name>
+    </author>
+    <author>
+      <name>Ferenc Huszar</name>
+    </author>
+    <author>
+      <name>Rumman Chowdhury</name>
+    </author>
+    <arxiv:doi xmlns:arxiv="http://arxiv.org/schemas/atom">10.1016/j.patter.2022.100568</arxiv:doi>
+    <link title="doi" href="http://dx.doi.org/10.1016/j.patter.2022.100568" rel="related"/>
+    <arxiv:comment xmlns:arxiv="http://arxiv.org/schemas/atom">11 pages, 7 figures</arxiv:comment>
+    <link href="http://arxiv.org/abs/2202.01615v1" rel="alternate" type="text/html"/>
+    <link title="pdf" href="http://arxiv.org/pdf/2202.01615v1" rel="related" type="application/pdf"/>
+    <arxiv:primary_category xmlns:arxiv="http://arxiv.org/schemas/atom" term="cs.CY" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.CY" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+  </entry>
+</feed>
