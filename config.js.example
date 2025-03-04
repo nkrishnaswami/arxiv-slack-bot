@@ -1,6 +1,9 @@
 const config = {
     app_token: 'SOME_APP_TOKEN',
     oauth_token: 'xoxa-some-oauth-token',
+    client_id: 'arxivbot_client_id',
+    client_secret: 'arxivbot_client_secret',
+    state_secret: 'arxivbot_state_secret,'
 };
 
 export default config;
