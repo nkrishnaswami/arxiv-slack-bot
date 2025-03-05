@@ -1,3 +1,18 @@
+# arxiv-slack-bot
+## Changes
+This has diverged a good bit from the original (Slack bot of Theseus :-)):
+* Javascript to Typescript
+* Node to bun
+* Config file support
+* Switched to Slack's Bolt framework
+* Abstracted unfurlers a little to allow plugging in more at some point
+* Support for socket mode
+* Support for OAuth installation flows
+
+Anyway, thanks to @rshin for making something I've gotten to tinker with and enjoy for a long time.
+
+## Original
+
 To use this code:
 
 * Host this code somewhere. You might be able to use AWS Lambda or Google Cloud Functions.
