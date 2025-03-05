@@ -7,6 +7,8 @@ import { FileInstallationStore } from "@slack/oauth";
 import type {ChatUnfurlArguments} from "@slack/web-api";
 
 const PORT = process.env.PORT || config.port || 8081;
+// App token for socket mode
+const APP_TOKEN = process.env.APP_TOKEN || config.app_token;
 // "Signing secret" under Basic Information
 const SIGNING_SECRET = process.env.SIGNING_SECRET || config.signing_secret;
 // OAuth for distribution
@@ -15,8 +17,9 @@ const CLIENT_SECRET = process.env.CLIENT_SECRET || config.client_secret;
 const STATE_SECRET = process.env.STATE_SECRET || config.state_secret;
 
 
-const app = new App({
-  port: PORT,
+const appConfig = {
+  socketMode: true,,
+  appToken: APP_TOKEN,
   signingSecret: SIGNING_SECRET,
   logLevel: LogLevel.DEBUG,
   clientId: CLIENT_ID,
@@ -24,7 +27,10 @@ const app = new App({
   stateSecret: STATE_SECRET,
   scopes: ['links:read', 'links:write'],
   installationStore: new FileInstallationStore(),
-})
+};
+console.log('Starting app', appConfig)
+
+const app = new App(appConfig);
 
 const UNFURLERS = [
   new ArxivUnfurler(),
