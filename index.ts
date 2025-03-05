@@ -2,6 +2,7 @@ import config from "./config";
 import {isBasicAuth, isOAuthFlow} from "./config_types";
 import type {Config} from "./config_types";
 import ArxivUnfurler from "./arxiv";
+import SSRNUnfurler from "./ssrn";
 
 import process from "process";
 import {App} from "@slack/bolt";
@@ -77,6 +78,7 @@ const app = new App(appConfig);
 
 const UNFURLERS = [
   new ArxivUnfurler(),
+  new SSRNUnfurler(),
 ];
 
 app.use(async ({next}) => {await next();})
@@ -94,8 +96,8 @@ app.event("link_shared", async ({event, client}) => {
   const req: ChatUnfurlArguments = {
     unfurls: allUnfurls,
     // I can't get these to work.
-    // source: event.source!,
-    // unfurl_id: event.unfurl_id!,
+    //   source: event.source!,
+    //   unfurl_id: event.unfurl_id!,
     channel: event.channel,
     ts: `${event.message_ts}`,
   };
