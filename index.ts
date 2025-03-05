@@ -93,10 +93,11 @@ app.event("link_shared", async ({event, client}) => {
   }
   const req: ChatUnfurlArguments = {
     unfurls: allUnfurls,
-    source: event.source!,
-    unfurl_id: event.unfurl_id!,
+    // I can't get these to work.
+    // source: event.source!,
+    // unfurl_id: event.unfurl_id!,
     channel: event.channel,
-    ts: event.message_ts,
+    ts: `${event.message_ts}`,
   };
   const resp = await client.chat.unfurl(req);
   if (!resp.ok) {

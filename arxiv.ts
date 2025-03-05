@@ -93,32 +93,31 @@ const parseEntry = (entry: ArxivEntry): ParsedArxivEntry | ParsedArxivError => {
 
 const fetchArxivData = async (urls: string[]): Promise<{[key: string]: ParsedArxivEntry}> => {
   const arxivIDs: string[] = [];
-  const arxivIDToURL: {[key: string]: string} = {};
-  for (let idx = 0; idx < arxivIDs.length; ++idx) {
-    const arxivID = urls[idx].match(ARXIV_ID)[0];
+  for (const url of urls) {
+    const arxivID = url.match(ARXIV_ID)[0];
     arxivIDs.push(arxivID)
-    arxivIDToURL[arxivID] = urls[idx];
   }
   console.log(`Fetching arxiv data for [${arxivIDs.join(", ")}]`);
 
-  const response = await fetch(`${ARXIV_API_URL}?id_list=${arxivIDs.map((x)=>`arXiv:${x}`).join(",")}&max_results=${arxivIDs.length}`);
+  const response = await fetch(`${ARXIV_API_URL}?id_list=${arxivIDs.join(",")}&max_results=${arxivIDs.length}`);
   if (!response.ok) {
-    console.log(`Error calling arXiv API for ${response.url}: ${await response.text}`);
+    console.error(`Error calling arXiv API for ${response.url}: ${await response.text()}`);
     return {};
   }
-  const result = await parseString(await response.text);
+  const result = await parseString(await response.text());
   if (!result.feed.entry) {
-    console.log('ArXiv entries not found');
+    console.error('ArXiv entries not found');
     return {};
   }
   const parsedEntries = result.feed.entry.map(parseEntry);
   if (parsedEntries.length === 1 && parsedEntries[0].error) {
-    console.log(`Error calling arXiv API for ${response.url}: ${parsedEntries[0].error}`);
+    console.error(`Error calling arXiv API for ${response.url}: ${parsedEntries[0].error}`);
     return {};
   }
   const ret: {[key: string]: ParsedArxivEntry} = {}
-  for (const parsedEntry of parsedEntries) {
-    ret[arxivIDToURL[parsedEntry.id]] = parsedEntry;
+  for (var idx = 0; idx < parsedEntries.length; ++idx) {
+    const parsedEntry = parsedEntries[idx]
+    ret[urls[idx]] = parsedEntry;
   }
   return ret;
 }
@@ -131,7 +130,7 @@ const formatArxivDataAsAttachment = (arxivData: ParsedArxivEntry): MessageAttach
     text: arxivData.summary,
     footer: arxivData.categories.join(', '),
     footer_icon: 'https://arxiv.org/favicon.ico',
-    ts: `${arxivData.updated_time}`,
+    ts: arxivData.updated_time,
     color: '#b31b1b',
   };
 }
