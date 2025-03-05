@@ -1,0 +1,28 @@
+import type {Config} from './config_types';
+
+const config: Config = {      
+    // The "Signing secret" under "Basic Information", "App Credentials".
+    signing_secret: 'your-signing-secret',
+    // The port on which to listen for requests and/or for installation management.
+    port: 3000,
+    // You can change this if you don't want verbose logs
+    logLevel: LogLevel.DEBUG,
+
+    // To enable socket mode, enter the app token you created for that purpose from
+    // "Basic Information", "App-Level Tokens"
+    app_token: 'xapp-some-app-token',
+
+    // For a single workspace installation, enter the "OAuth Access
+    // Token" under OAuth & Permissions; single workspace installation
+    oauth_token: 'xoxa-some-oauth-token',
+
+    // ALTERNATIVELY (they are mutually incompatible with oauth_token)
+    // if you are using the OAuth installation flow (for distribution
+    // or org-wide install, eg), set these.  They are under "Basic
+    // Information", "App Credentials".
+    client_id: 'arxivbot_client_id',
+    client_secret: 'arxivbot_client_secret',
+    state_secret: 'arxivbot_state_secret',
+};
+
+export default config;

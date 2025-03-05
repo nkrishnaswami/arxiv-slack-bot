@@ -20,6 +20,7 @@
   "author": "Richard Shin",
   "devDependencies": {
     "@types/bun": "latest",
+    "@types/xml2js": "^0.4.14",
     "tslint": "^6.1.3"
   },
   "peerDependencies": {

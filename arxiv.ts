@@ -1,8 +1,8 @@
 import type {SharedLink, Unfurler} from './unfurler';
 
-import {LinkUnfurls, MessageAttachment} from '@slack/types';
+import type {LinkUnfurls, MessageAttachment} from '@slack/types';
 import {Parser} from 'xml2js';
-const parser = Parser({trim: true});
+const parser = new Parser({trim: true});
 const parseString = parser.parseStringPromise;
 
 const ARXIV_API_URL = 'http://export.arxiv.org/api/query';
@@ -55,53 +55,55 @@ interface ParsedArxivEntry {
   url: string;
   title: string;
   summary: string;
-  authors: string[],
+  authors: string[];
   categories: string[];
   updated_time: number;
+  journal_ref?: string;
+  doi?: string;
 };
 
 interface ParsedArxivError {
   error: string;
 };
 
-const parseEntry = (arxivEntry: ArxivEntry): ParsedArxivEntry | ParsedArxivError => {
-  const ret = {
-    id: entry.id ? entry.id[0].split('/').pop() : '{No ID}',
+const parseEntry = (entry: ArxivEntry): ParsedArxivEntry | ParsedArxivError => {
+  const ret: ParsedArxivEntry = {
+    id: entry.id ? entry.id[0].split('/').pop() ?? '{No ID}' : '{No ID}',
     url: entry.id ? entry.id[0] : '{No url}',
     title: entry.title ? entry.title[0].trim().replace(/\n/g, ' ') : '{No title}',
     summary: entry.summary ? entry.summary[0].trim().replace(/\n/g, ' ') : '{No summary}',
-    authors: entry.author ? entry.author.map((a) => a.affiliation ? `${a.name[0]} (${a.affiliation[0]})` : a.name[0])
+    authors: entry.author ? entry.author.map((a) => a['arxiv:affiliation']? `${a.name[0]} (${a['arxiv:affiliation'][0]})` : a.name[0])
       : ['{No authors}'],
-    categories: entry.category ? entry.category[0].map(c => c.$.term) : [],
+    categories: entry.category ? entry.category.map(c => c.$.term) : [],
     updated_time: Date.parse(entry.updated[0]) / 1000,
   }
-  if (ret.id.startsWith(ARXIV_ID_ERROR_PREFIX)) {
+  if (ret.id && ret.id.startsWith(ARXIV_ID_ERROR_PREFIX)) {
     return {
       error: entry.summary[0]
     }
   }
   if (entry["arxiv:journal_ref"]) {
-    ret.journal_ref = entry["arxiv:journal_ref"]
+    ret.journal_ref = entry["arxiv:journal_ref"][0]
   }
   if (entry["arxiv:doi"]) {
-    ret.doi = entry["arxiv:doi"]
+    ret.doi = entry["arxiv:doi"][0]
   }
   return ret;
 }
 
-const fetchArxivData = async (urls: string[]): Map<string, ParsedArxivEntry> => {
+const fetchArxivData = async (urls: string[]): Promise<{[key: string]: ParsedArxivEntry}> => {
   const arxivIDs: string[] = [];
-  const arxivIDToURL = {};
+  const arxivIDToURL: {[key: string]: string} = {};
   for (let idx = 0; idx < arxivIDs.length; ++idx) {
     const arxivID = urls[idx].match(ARXIV_ID)[0];
-    arxivIDs.push_back(arxivID)
-    arxivIDToInputURL[arxivID] = urls[idx];
+    arxivIDs.push(arxivID)
+    arxivIDToURL[arxivID] = urls[idx];
   }
-  console.log(`Fetching arxiv data for [${arxivIds.join(", ")}]`);
+  console.log(`Fetching arxiv data for [${arxivIDs.join(", ")}]`);
 
-  const response = await fetch(`${ARXIV_API_URL}?id_list=${arxivIds.map((x)=>`arXiv:${x}`).join(",")}&max_results=${arxivIds.length}`);
+  const response = await fetch(`${ARXIV_API_URL}?id_list=${arxivIDs.map((x)=>`arXiv:${x}`).join(",")}&max_results=${arxivIDs.length}`);
   if (!response.ok) {
-    console.log(`Error calling arXiv API for ${request.url}: ${await response.text}`);
+    console.log(`Error calling arXiv API for ${response.url}: ${await response.text}`);
     return {};
   }
   const result = await parseString(await response.text);
@@ -111,12 +113,12 @@ const fetchArxivData = async (urls: string[]): Map<string, ParsedArxivEntry> => 
   }
   const parsedEntries = result.feed.entry.map(parseEntry);
   if (parsedEntries.length === 1 && parsedEntries[0].error) {
-    console.log(`Error calling arXiv API for ${request.url}: ${parsedEntries[0].error}`);
-    return {}
+    console.log(`Error calling arXiv API for ${response.url}: ${parsedEntries[0].error}`);
+    return {};
   }
-  ret = new Map<string, ParsedArxivEntry>()
+  const ret: {[key: string]: ParsedArxivEntry} = {}
   for (const parsedEntry of parsedEntries) {
-    ret.set(arxivIDToURL[parsedEntry.id], parsedEntry)
+    ret[arxivIDToURL[parsedEntry.id]] = parsedEntry;
   }
   return ret;
 }
@@ -129,7 +131,7 @@ const formatArxivDataAsAttachment = (arxivData: ParsedArxivEntry): MessageAttach
     text: arxivData.summary,
     footer: arxivData.categories.join(', '),
     footer_icon: 'https://arxiv.org/favicon.ico',
-    ts: arxivData.updated_time,
+    ts: `${arxivData.updated_time}`,
     color: '#b31b1b',
   };
 }
@@ -137,12 +139,12 @@ const formatArxivDataAsAttachment = (arxivData: ParsedArxivEntry): MessageAttach
 export class ArxivUnfurler implements Unfurler {
   LINK_RE = /(?:https?:\/\/)?arxiv\.org\/(?:abs|pdf)\/(\d{4}\.\d{4,5})(?:v\d+)?(?:.pdf)?/g
 
-  getLinkUnfurls = async (links: SharedLink[]): LinkUnfurls => {
+  getLinkUnfurls = async (links: SharedLink[]): Promise<LinkUnfurls> => {
     const unfurls: LinkUnfurls = {};
     const arXivURLs = links.filter(({domain, url}) => domain === "arxiv.org").map(({domain, url}) => url)
     const arxivData = await fetchArxivData(arXivURLs);
-    for (const [url, entry] of Object.getOwnPropertyNames(arxivData)) {
-      unfurls[url] = formatArxivDataAsAttachment(entry);
+    for (const url of Object.getOwnPropertyNames(arxivData)) {
+      unfurls[url] = formatArxivDataAsAttachment(arxivData[url]);
     }
     return unfurls;
   }
